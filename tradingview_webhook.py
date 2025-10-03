@@ -35,7 +35,7 @@ def index():
         <style>
             body {
                 font-family: 'Segoe UI', Arial, sans-serif;
-                background: linear-gradient(135deg, #232526 0%, #414345 100%);
+                background: #000;
                 color: #f5f5f5;
                 margin: 0;
                 padding: 0;
