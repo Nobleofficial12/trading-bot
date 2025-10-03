@@ -1,8 +1,8 @@
 import requests
-import config
+import myconfig
 
-TOKEN = config.TELEGRAM_BOT_TOKEN
-CHAT_ID = config.CHAT_ID
+TOKEN = myconfig.TELEGRAM_BOT_TOKEN
+CHAT_ID = myconfig.CHAT_ID
 MESSAGE = "🚀 Test Alert: Your bot is working!"
 
 url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"

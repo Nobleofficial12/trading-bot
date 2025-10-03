@@ -1,15 +1,15 @@
 import requests
 import time
 import itertools
-import config
+import myconfig
 
 # ------------------ CONFIG ------------------ #
 
 # GoldAPI key (get a free one at https://www.goldapi.io/)
 GOLDAPI_KEY = "goldapi-1cbghsmg8r9nks-io"
 
-TELEGRAM_BOT_TOKEN = config.TELEGRAM_BOT_TOKEN
-CHAT_ID = config.CHAT_ID
+TELEGRAM_BOT_TOKEN = myconfig.TELEGRAM_BOT_TOKEN
+CHAT_ID = myconfig.CHAT_ID
 FETCH_INTERVAL = 60  # seconds between price checks
 # -------------------------------------------- #
 
