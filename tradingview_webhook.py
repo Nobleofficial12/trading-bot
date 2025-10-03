@@ -71,14 +71,40 @@ def index():
                 align-items: center;
                 justify-content: center;
             }
-            .turbine-blades {
+            .fan {
+                position: relative;
                 width: 80px;
                 height: 80px;
-                border-radius: 50%;
-                border: 8px solid #FFD700;
-                border-top: 8px solid #232526;
-                border-bottom: 8px solid #232526;
+                margin: 0 auto;
                 animation: spin 1.2s linear infinite;
+            }
+            .blade {
+                position: absolute;
+                width: 12px;
+                height: 36px;
+                background: linear-gradient(135deg, #FFD700 60%, #bfa100 100%);
+                border-radius: 6px 6px 24px 24px;
+                left: 34px;
+                top: 4px;
+                transform-origin: 50% 80%;
+                opacity: 0.85;
+            }
+            .fan .blade:nth-child(1) { transform: rotate(0deg)   translateY(0); }
+            .fan .blade:nth-child(2) { transform: rotate(72deg)  translateY(0); }
+            .fan .blade:nth-child(3) { transform: rotate(144deg) translateY(0); }
+            .fan .blade:nth-child(4) { transform: rotate(216deg) translateY(0); }
+            .fan .blade:nth-child(5) { transform: rotate(288deg) translateY(0); }
+            .fan-hub {
+                position: absolute;
+                left: 28px;
+                top: 28px;
+                width: 24px;
+                height: 24px;
+                background: #FFD700;
+                border-radius: 50%;
+                border: 3px solid #bfa100;
+                z-index: 2;
+                box-shadow: 0 0 8px #FFD70088;
             }
             @keyframes spin {
                 0% { transform: rotate(0deg); }
@@ -116,7 +142,14 @@ def index():
         </div>
         <div class="container">
             <div class="turbine">
-                <div class="turbine-blades"></div>
+                <div class="fan">
+                    <div class="blade"></div>
+                    <div class="blade"></div>
+                    <div class="blade"></div>
+                    <div class="blade"></div>
+                    <div class="blade"></div>
+                    <div class="fan-hub"></div>
+                </div>
             </div>
             <h1>Trading Bot is Running</h1>
             <p>The webhook endpoint is ready to receive TradingView alerts.</p>
