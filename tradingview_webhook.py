@@ -112,6 +112,7 @@ def index():
     <body>
         <div class="navbar">
             <span class="bot-name">XAUUSD Trading Bot</span>
+            <span class="creator" style="margin-left:auto; color:#FFD700; font-size:1.05rem; font-weight:500;">By O.A ISRAEL</span>
         </div>
         <div class="container">
             <div class="turbine">
@@ -120,11 +121,7 @@ def index():
             <h1>Trading Bot is Running</h1>
             <p>The webhook endpoint is ready to receive TradingView alerts.</p>
             <div class="webhook"><b>POST signals to:</b> <code>/webhook</code></div>
-            <div class="about">
-                <p><strong>About the Creator:</strong><br>
-                Built by <strong>Nobleofficial12</strong>.<br>
-                <span style="font-size:0.95em;">Automating XAUUSD trading signals with Python, Flask, and Telegram.</span></p>
-            </div>
+            <!-- About section removed, creator now in navbar -->
         </div>
     </body>
     </html>
