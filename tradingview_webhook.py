@@ -13,7 +13,7 @@
 # =====================
 
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 import requests
 import sys
 import os
@@ -21,6 +21,21 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from xauusd_bot import send_telegram_message
 
 app = Flask(__name__)
+
+# Simple status page for root URL
+@app.route("/")
+def index():
+    html = """
+    <html>
+    <head><title>Trading Bot Status</title></head>
+    <body style='font-family:sans-serif; text-align:center; margin-top:10%;'>
+        <h1>Trading Bot is Running</h1>
+        <p>The webhook endpoint is ready to receive TradingView alerts.</p>
+        <p><b>POST signals to:</b> <code>/webhook</code></p>
+    </body>
+    </html>
+    """
+    return render_template_string(html)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
