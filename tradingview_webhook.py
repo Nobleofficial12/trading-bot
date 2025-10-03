@@ -26,12 +26,106 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     html = """
-    <html>
-    <head><title>Trading Bot Status</title></head>
-    <body style='font-family:sans-serif; text-align:center; margin-top:10%;'>
-        <h1>Trading Bot is Running</h1>
-        <p>The webhook endpoint is ready to receive TradingView alerts.</p>
-        <p><b>POST signals to:</b> <code>/webhook</code></p>
+    <!DOCTYPE html>
+    <html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>XAUUSD Trading Bot Status</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background: linear-gradient(135deg, #232526 0%, #414345 100%);
+                color: #f5f5f5;
+                margin: 0;
+                padding: 0;
+            }
+            .navbar {
+                background: #222831;
+                padding: 1rem 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .navbar .bot-name {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #FFD700;
+                letter-spacing: 2px;
+            }
+            .container {
+                max-width: 600px;
+                margin: 60px auto 0 auto;
+                background: rgba(34, 40, 49, 0.95);
+                border-radius: 16px;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+                padding: 2.5rem 2rem 2rem 2rem;
+                text-align: center;
+            }
+            .turbine {
+                margin: 2rem auto 1.5rem auto;
+                width: 80px;
+                height: 80px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .turbine-blades {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                border: 8px solid #FFD700;
+                border-top: 8px solid #232526;
+                border-bottom: 8px solid #232526;
+                animation: spin 1.2s linear infinite;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            h1 {
+                color: #FFD700;
+                margin-bottom: 0.5rem;
+            }
+            .webhook {
+                background: #393e46;
+                color: #FFD700;
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                font-family: monospace;
+                margin: 1rem 0;
+                display: inline-block;
+            }
+            .about {
+                margin-top: 2.5rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid #FFD70033;
+                color: #bdbdbd;
+                font-size: 1rem;
+            }
+            .about strong {
+                color: #FFD700;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="navbar">
+            <span class="bot-name">XAUUSD Trading Bot</span>
+        </div>
+        <div class="container">
+            <div class="turbine">
+                <div class="turbine-blades"></div>
+            </div>
+            <h1>Trading Bot is Running</h1>
+            <p>The webhook endpoint is ready to receive TradingView alerts.</p>
+            <div class="webhook"><b>POST signals to:</b> <code>/webhook</code></div>
+            <div class="about">
+                <p><strong>About the Creator:</strong><br>
+                Built by <strong>Nobleofficial12</strong>.<br>
+                <span style="font-size:0.95em;">Automating XAUUSD trading signals with Python, Flask, and Telegram.</span></p>
+            </div>
+        </div>
     </body>
     </html>
     """
