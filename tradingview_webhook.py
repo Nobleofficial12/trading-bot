@@ -71,49 +71,22 @@ def index():
                 align-items: center;
                 justify-content: center;
             }
-            .fan {
-                position: relative;
+            .turbine {
+                margin: 2rem auto 1.5rem auto;
                 width: 80px;
                 height: 80px;
-                margin: 0 auto;
-                animation: spin 0.6s linear infinite;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
-            .blade {
-                position: absolute;
-                width: 5px;
-                height: 38px;
-                background: linear-gradient(120deg, #bfc1c2 0%, #e0e0e0 60%, #888 100%);
-                border-radius: 2.5px 2.5px 18px 18px;
-                left: 37.5px;
-                top: 2px;
-                transform-origin: 50% 85%;
-                opacity: 0.92;
-                box-shadow: 0 0 6px #2228, 0 0 2px #fff8;
-            }
-            /* 12 blades for jet look */
-            .fan .blade:nth-child(1)  { transform: rotate(0deg)   translateY(0); }
-            .fan .blade:nth-child(2)  { transform: rotate(30deg)  translateY(0); }
-            .fan .blade:nth-child(3)  { transform: rotate(60deg)  translateY(0); }
-            .fan .blade:nth-child(4)  { transform: rotate(90deg)  translateY(0); }
-            .fan .blade:nth-child(5)  { transform: rotate(120deg) translateY(0); }
-            .fan .blade:nth-child(6)  { transform: rotate(150deg) translateY(0); }
-            .fan .blade:nth-child(7)  { transform: rotate(180deg) translateY(0); }
-            .fan .blade:nth-child(8)  { transform: rotate(210deg) translateY(0); }
-            .fan .blade:nth-child(9)  { transform: rotate(240deg) translateY(0); }
-            .fan .blade:nth-child(10) { transform: rotate(270deg) translateY(0); }
-            .fan .blade:nth-child(11) { transform: rotate(300deg) translateY(0); }
-            .fan .blade:nth-child(12) { transform: rotate(330deg) translateY(0); }
-            .fan-hub {
-                position: absolute;
-                left: 32px;
-                top: 32px;
-                width: 16px;
-                height: 16px;
-                background: radial-gradient(circle at 60% 40%, #444 60%, #222 100%);
+            .turbine-blades {
+                width: 80px;
+                height: 80px;
                 border-radius: 50%;
-                border: 2px solid #888;
-                z-index: 2;
-                box-shadow: 0 0 8px #222a;
+                border: 8px solid #FFD700;
+                border-top: 8px solid #232526;
+                border-bottom: 8px solid #232526;
+                animation: spin 1.2s linear infinite;
             }
             @keyframes spin {
                 0% { transform: rotate(0deg); }
@@ -151,21 +124,7 @@ def index():
         </div>
         <div class="container">
             <div class="turbine">
-                <div class="fan">
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="blade"></div>
-                    <div class="fan-hub"></div>
-                </div>
+                <div class="turbine-blades"></div>
             </div>
             <h1>Trading Bot is Running</h1>
             <p>The webhook endpoint is ready to receive TradingView alerts.</p>
