@@ -36,12 +36,16 @@ def main(send=False):
     print('Using webhook_url:', webhook_url)
     try:
         df5 = fetch_ohlc(interval='5min', limit=200)
-        df15 = fetch_ohlc(interval='15min', limit=200)
         df1h = fetch_ohlc(interval='1h', limit=200)
     except Exception as e:
         print('Failed to fetch OHLC:', e)
         traceback.print_exc()
-        sys.exit(1)
+        print('Check your Twelve Data API key and network connection.')
+        return
+
+    if df5 is None or df1h is None or len(df5) < 5 or len(df1h) < 5:
+        print('Insufficient data fetched for debug output. Check your data source and API key.')
+        return
 
     le5, se5, z5, t5, r5 = detect_signals(df5)
     le1h, se1h, z1h, t1h, r1h = detect_signals(df1h)
