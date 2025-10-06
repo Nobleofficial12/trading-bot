@@ -62,17 +62,20 @@ def main():
     webhook_url = "http://localhost:5000/webhook"  # Update if needed
     while True:
         try:
-            # Fetch LTF (5min) and HTF (4h) data
+            # Fetch LTF (5min), MTF (15min), and HTF (1h) data
             df = fetch_ohlc(interval="5min", limit=100)
-            df_htf = fetch_ohlc(interval="4h", limit=100)
-            long_entry, short_entry, zlema, trend, rsi = detect_signals(df)
-            htf_trend = get_trend(df_htf)
-            htf_trend_latest = htf_trend.iloc[-1]
-            # Confirmed entries: LTF entry + HTF trend agreement
-            if long_entry.iloc[-1] and htf_trend_latest == 1:
-                send_signal_to_webhook("longSignal", df['close'].iloc[-1], trend.iloc[-1], rsi.iloc[-1], webhook_url)
-            elif short_entry.iloc[-1] and htf_trend_latest == -1:
-                send_signal_to_webhook("shortSignal", df['close'].iloc[-1], trend.iloc[-1], rsi.iloc[-1], webhook_url)
+            df_mtf = fetch_ohlc(interval="15min", limit=100)
+            df_htf = fetch_ohlc(interval="1h", limit=100)
+            # Run full entry logic on all three timeframes
+            long_entry_5m, short_entry_5m, zlema_5m, trend_5m, rsi_5m = detect_signals(df)
+            long_entry_15m, short_entry_15m, zlema_15m, trend_15m, rsi_15m = detect_signals(df_mtf)
+            long_entry_1h, short_entry_1h, zlema_1h, trend_1h, rsi_1h = detect_signals(df_htf)
+
+            # Only send signal if all three timeframes agree
+            if long_entry_5m.iloc[-1] and long_entry_15m.iloc[-1] and long_entry_1h.iloc[-1]:
+                send_signal_to_webhook("longSignal", df['close'].iloc[-1], trend_5m.iloc[-1], rsi_5m.iloc[-1], webhook_url)
+            elif short_entry_5m.iloc[-1] and short_entry_15m.iloc[-1] and short_entry_1h.iloc[-1]:
+                send_signal_to_webhook("shortSignal", df['close'].iloc[-1], trend_5m.iloc[-1], rsi_5m.iloc[-1], webhook_url)
         except NotImplementedError:
             print("fetch_ohlc is not implemented. Please connect to your data source.")
             break
