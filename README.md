@@ -1,0 +1,34 @@
+# Trading Bot
+
+This repository contains scripts for monitoring XAU/USD, generating signals and relaying them to Telegram.
+
+Key files
+- `python_signal_engine.py` - Signal engine that fetches OHLC from Twelve Data and sends signals to a webhook.
+- `tradingview_webhook.py` - Flask app that accepts TradingView/webhook signals and relays them to Telegram.
+- `xauusd_bot.py` - Helper utilities for fetching XAU/USD price and sending Telegram messages.
+- `myconfig.py` - Local config file (not committed if it contains secrets). Use environment variables in production.
+
+Recommended environment variables (optional, fall back to `myconfig.py`):
+- `TWELVE_DATA_API_KEY` - Twelve Data API key
+- `WEBHOOK_URL` - URL for webhook relay
+- `WEBHOOK_SECRET` - Optional secret header to protect the webhook
+- `GOLDAPI_KEY` - GoldAPI key for price fetch
+- `TELEGRAM_BOT_TOKEN` - Telegram bot token
+- `CHAT_ID` - Telegram chat id
+- `FETCH_INTERVAL` - Price fetch interval in seconds
+
+Improvements made
+- Configs now read from environment variables with `myconfig.py` fallback.
+- Added retries and backoff for external HTTP calls (Twelve Data, GoldAPI, webhook POSTs).
+- Webhook now supports optional secret header validation.
+- Improved logging for signal decisions to aid debugging.
+
+How to run
+1. Install requirements: `pip install -r requirements.txt`
+2. Ensure `myconfig.py` exists with the required keys or export env vars.
+3. Run the webhook: `python tradingview_webhook.py` (or deploy to PythonAnywhere/Heroku)
+4. Run the signal engine: `python python_signal_engine.py`
+
+Security note
+- Don't commit secrets to Git. Use `myconfig.py` locally and environment variables in production.
+

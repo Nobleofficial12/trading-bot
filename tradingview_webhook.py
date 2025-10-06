@@ -18,7 +18,11 @@ import requests
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import myconfig
 from xauusd_bot import send_telegram_message
+
+# Optional webhook secret (set WEBHOOK_SECRET env var or in myconfig)
+WEBHOOK_SECRET = os.getenv('WEBHOOK_SECRET', getattr(myconfig, 'WEBHOOK_SECRET', None))
 
 app = Flask(__name__)
 
@@ -142,6 +146,13 @@ def webhook():
     if not data:
         return jsonify({'error': 'No JSON received'}), 400
 
+    # Optional validation: check a secret header
+    if WEBHOOK_SECRET:
+        header_secret = request.headers.get('X-Webhook-Secret')
+        if header_secret != WEBHOOK_SECRET:
+            print('Webhook secret mismatch')
+            return jsonify({'error': 'Unauthorized'}), 401
+
 
     # Parse fields from TradingView alert JSON
     signal_type = data.get('signal_type')  # e.g., "buy", "sell", "longSignal", "shortSignal"
@@ -165,7 +176,11 @@ def webhook():
         f"Volume Confirmed: {volume_confirmed}"
     )
     print(f"Relaying TradingView alert to Telegram: {msg}")
-    send_telegram_message(msg)
+    try:
+        send_telegram_message(msg)
+    except Exception as e:
+        print(f"Failed to send Telegram message from webhook: {e}")
+        return jsonify({'error': 'failed to send'}), 500
 
     return jsonify({'status': 'received'}), 200
 

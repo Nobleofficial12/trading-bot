@@ -1,12 +1,14 @@
+import os
 import pandas as pd
 import requests
 import time
 from ta.trend import EMAIndicator
 from ta.volatility import AverageTrueRange
 from ta.momentum import RSIIndicator
+import myconfig
 
 from twelvedata import TDClient
-TD_API_KEY = "8905999fd8484f62af0d1eb49cbe7d77"  # Replace with your Twelve Data API key
+TD_API_KEY = os.getenv('TWELVE_DATA_API_KEY', getattr(myconfig, 'TWELVE_DATA_API_KEY', None))
 def fetch_ohlc(symbol="XAU/USD", interval="5min", limit=100):
     td = TDClient(apikey=TD_API_KEY)
     bars = td.time_series(symbol=symbol, interval=interval, outputsize=limit, order='ASC').as_pandas()
@@ -55,11 +57,26 @@ def send_signal_to_webhook(signal_type, price, ema_trend, rsi, webhook_url):
         "ema_trend": ema_trend,
         "rsi": rsi
     }
-    response = requests.post(webhook_url, json=data)
-    print(f"Sent {signal_type} signal: {response.status_code} {response.text}")
+    # Robust POST with retries
+    max_attempts = 3
+    backoff = 2
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = requests.post(webhook_url, json=data, timeout=10)
+            print(f"Attempt {attempt}: Sent {signal_type} signal -> {response.status_code}")
+            if response.status_code in (200, 201, 202):
+                return True
+            else:
+                print(f"Webhook responded with status {response.status_code}: {response.text}")
+        except requests.exceptions.RequestException as e:
+            print(f"Attempt {attempt} failed to send webhook: {e}")
+        time.sleep(backoff ** attempt)
+    print(f"Failed to send {signal_type} after {max_attempts} attempts.")
+    return False
 
 def main():
-    webhook_url = "http://localhost:5000/webhook"  # Update if needed
+    # Webhook URL can be set via environment variable or in myconfig as WEBHOOK_URL
+    webhook_url = os.getenv('WEBHOOK_URL', getattr(myconfig, 'WEBHOOK_URL', 'http://localhost:5000/webhook'))
     while True:
         try:
             # Fetch LTF (5min), MTF (15min), and HTF (1h) data
