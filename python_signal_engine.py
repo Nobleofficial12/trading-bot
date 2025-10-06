@@ -24,18 +24,40 @@ def fetch_ohlc(symbol=SYMBOL, interval="5min", limit=FETCH_LIMIT):
     if not TD_API_KEY:
         logging.error("Twelve Data API key is missing. Set TWELVE_DATA_API_KEY in environment or myconfig.")
         return None
+    # Use cache to assemble history; fetch only newest bars from API and append
+    from data_cache import load_cache, append_to_cache
     td = TDClient(apikey=TD_API_KEY)
-    bars = td.time_series(symbol=symbol, interval=interval, outputsize=limit, order='ASC').as_pandas()
-    # Ensure the datetime is preserved as a column named 'datetime'
-    bars = bars.reset_index()
-    if 'datetime' not in bars.columns:
-        # rename first column to datetime if necessary
-        bars = bars.rename(columns={bars.columns[0]: 'datetime'})
-    bars['datetime'] = pd.to_datetime(bars['datetime'])
-    # cast OHLC to float
-    bars[['open', 'high', 'low', 'close']] = bars[['open', 'high', 'low', 'close']].astype(float)
-    bars['volume'] = 1
-    bars = bars.tail(limit).reset_index(drop=True)
+
+    # Load existing cache
+    cached = load_cache(symbol, interval)
+    # If cache exists and has enough rows, return last `limit` rows immediately
+    if cached is not None and len(cached) >= limit:
+        return cached.tail(limit).reset_index(drop=True)
+
+    # Otherwise, fetch available bars from Twelve Data (smallest possible chunk) and append
+    try:
+        bars = td.time_series(symbol=symbol, interval=interval, outputsize=limit, order='ASC').as_pandas()
+        bars = bars.reset_index()
+        if 'datetime' not in bars.columns:
+            bars = bars.rename(columns={bars.columns[0]: 'datetime'})
+        bars['datetime'] = pd.to_datetime(bars['datetime'])
+        bars[['open', 'high', 'low', 'close']] = bars[['open', 'high', 'low', 'close']].astype(float)
+        bars['volume'] = 1
+        bars = bars.tail(limit).reset_index(drop=True)
+    except Exception as e:
+        logging.warning(f"Failed to fetch from Twelve Data: {e}")
+        # Fall back to cache if available
+        if cached is not None:
+            return cached.tail(limit).reset_index(drop=True)
+        return None
+
+    # If cache exists, append and return combined tail
+    if cached is not None:
+        combined = append_to_cache(symbol, interval, bars)
+        return combined.tail(limit).reset_index(drop=True)
+
+    # No cache existed: save the bars as cache and return
+    append_to_cache(symbol, interval, bars)
     return bars
 
 def detect_signals(df, ema_length=70, rsi_length=14, band_mult=1.2):
