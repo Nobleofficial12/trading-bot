@@ -151,10 +151,9 @@ def send_signal_to_webhook(signal_type, price, ema_trend, rsi, webhook_url):
     return False
 
 
-# Simple in-memory dedupe store to avoid sending duplicate signals repeatedly.
-# Keys are signal_id -> timestamp (UTC seconds)
-_sent_signals = {}
-_DEDUP_TTL = 120  # seconds
+# Persistent dedupe store using SQLite so idempotency survives restarts.
+from dedupe_store import get as dedupe_get, set as dedupe_set, cleanup as dedupe_cleanup
+_DEDUP_TTL = int(os.getenv('DEDUP_TTL', '120'))  # seconds
 
 def _make_signal_id(symbol, timeframe, signal_type, bar_time):
     # bar_time is expected to be a pandas.Timestamp or datetime or ISO string
@@ -178,11 +177,10 @@ def send_signal_to_webhook_with_metadata(signal_type, price, ema_trend, rsi, web
     """
     signal_id = _make_signal_id(symbol or SYMBOL, timeframe or '', signal_type, bar_time)
     now_ts = int(datetime.now(timezone.utc).timestamp())
-    # cleanup old entries
-    for k, t in list(_sent_signals.items()):
-        if now_ts - t > _DEDUP_TTL:
-            _sent_signals.pop(k, None)
-    if signal_id in _sent_signals:
+    # cleanup old entries from DB
+    dedupe_cleanup(now_ts - _DEDUP_TTL)
+    existing = dedupe_get(signal_id)
+    if existing is not None:
         logging.info(f"Skipping duplicate signal (recently sent): {signal_type} {symbol} {timeframe} {bar_time}")
         return False
 
@@ -201,7 +199,7 @@ def send_signal_to_webhook_with_metadata(signal_type, price, ema_trend, rsi, web
     logging.info(f"Prepared signal payload: {payload}")
     if dry_run:
         logging.info("Dry-run enabled: not POSTing to webhook")
-        _sent_signals[signal_id] = now_ts
+        dedupe_set(signal_id, now_ts)
         return True
 
     headers = {"Idempotency-Key": signal_id}
@@ -212,7 +210,7 @@ def send_signal_to_webhook_with_metadata(signal_type, price, ema_trend, rsi, web
             resp = requests.post(webhook_url, json=payload, headers=headers, timeout=10)
             logging.info(f"Attempt {attempt}: POST {webhook_url} -> {resp.status_code}")
             if resp.status_code in (200, 201, 202):
-                _sent_signals[signal_id] = now_ts
+                dedupe_set(signal_id, now_ts)
                 return True
             else:
                 logging.warning(f"Webhook returned {resp.status_code}: {resp.text}")
