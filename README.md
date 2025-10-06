@@ -46,6 +46,17 @@ Run tests
 
 ```powershell
 python -m pytest -q
+
+Bootstrap cache from TradingView export
+
+1. In TradingView, open the chart you use and the timeframe (e.g., 5m). Click the three-dots menu on the chart -> "Export" -> save the CSV.
+2. Run the bootstrap tool to import the CSV into the local cache:
+
+```powershell
+python tools/bootstrap_cache.py --symbol "XAU/USD" --interval 5min --file path\to\tradingview_export_5m.csv
+```
+
+This will create a CSV in `data_cache/` that the engine will use to compute indicators immediately.
 ```
 
 Security note
