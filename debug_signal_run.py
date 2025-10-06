@@ -32,22 +32,22 @@ def main(send=False):
         sys.exit(1)
 
     le5, se5, z5, t5, r5 = detect_signals(df5)
-    le15, se15, z15, t15, r15 = detect_signals(df15)
     le1h, se1h, z1h, t1h, r1h = detect_signals(df1h)
 
-    long_5m = le5.iloc[-3:]
-    long_15m = le15.iloc[-3:]
-    long_1h = le1h.iloc[-3:]
-    short_5m = se5.iloc[-3:]
-    short_15m = se15.iloc[-3:]
-    short_1h = se1h.iloc[-3:]
+    # HTF confirmation: only consider entries where 5m entry and 1h trend agree
+    confirmed_long_5m = le5 & (t1h == 1)
+    confirmed_short_5m = se5 & (t1h == -1)
 
-    long_agree = sum([long_5m.any(), long_15m.any(), long_1h.any()])
-    short_agree = sum([short_5m.any(), short_15m.any(), short_1h.any()])
 
-    print('\n=== Agreement Summary ===')
-    print(f'Long agree count: {long_agree} (5m={long_5m.any()},15m={long_15m.any()},1h={long_1h.any()})')
-    print(f'Short agree count: {short_agree} (5m={short_5m.any()},15m={short_15m.any()},1h={short_1h.any()})')
+    # Only look at last 3 bars for confirmed entries
+    long_5m = confirmed_long_5m.iloc[-3:]
+    short_5m = confirmed_short_5m.iloc[-3:]
+    long_agree = long_5m.any()
+    short_agree = short_5m.any()
+
+    print('\n=== HTF Confirmation Summary ===')
+    print(f'Long signal (5m entry & 1h trend==1): {long_agree}')
+    print(f'Short signal (5m entry & 1h trend==-1): {short_agree}')
 
     print('\nLast few rows (5m):')
     print(df5.tail(3).to_string())
@@ -56,16 +56,16 @@ def main(send=False):
     print('RSI last (5m):', r5.iloc[-1])
 
     if send:
-        if long_agree >= 2:
-            print('\nSending LONG signal to webhook...')
+        if long_agree:
+            print('\nSending LONG signal to webhook (HTF confirmed)...')
             ok = send_signal_to_webhook('longSignal', df5['close'].iloc[-1], t5.iloc[-1], r5.iloc[-1], webhook_url)
             print('Webhook send ok:', ok)
-        elif short_agree >= 2:
-            print('\nSending SHORT signal to webhook...')
+        elif short_agree:
+            print('\nSending SHORT signal to webhook (HTF confirmed)...')
             ok = send_signal_to_webhook('shortSignal', df5['close'].iloc[-1], t5.iloc[-1], r5.iloc[-1], webhook_url)
             print('Webhook send ok:', ok)
         else:
-            print('\nNot sending: less than 2 timeframes agree')
+            print('\nNot sending: no HTF-confirmed entry')
 
 
 if __name__ == '__main__':
