@@ -35,10 +35,15 @@ def main(send=False):
     webhook_url = os.getenv('WEBHOOK_URL', getattr(myconfig, 'WEBHOOK_URL', None))
     print('Using webhook_url:', webhook_url)
     try:
-        df5 = fetch_ohlc(interval='5min', limit=200)
-        df1h = fetch_ohlc(interval='1h', limit=200)
+        df5 = fetch_ohlc(interval='5min', limit=20)
+        df1h = fetch_ohlc(interval='1h', limit=20)
+        le5, se5, z5, t5, r5 = detect_signals(df5)
+        le1h, se1h, z1h, t1h, r1h = detect_signals(df1h)
+        # HTF confirmation: only consider entries where 5m entry and 1h trend agree
+        confirmed_long_5m = le5 & (t1h == 1)
+        confirmed_short_5m = se5 & (t1h == -1)
     except Exception as e:
-        print('Failed to fetch OHLC:', e)
+        print('Failed to fetch OHLC or compute signals:', e)
         traceback.print_exc()
         print('Check your Twelve Data API key and network connection.')
         return

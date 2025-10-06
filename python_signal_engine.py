@@ -9,7 +9,7 @@ import myconfig
 
 from twelvedata import TDClient
 TD_API_KEY = os.getenv('TWELVE_DATA_API_KEY', getattr(myconfig, 'TWELVE_DATA_API_KEY', None))
-def fetch_ohlc(symbol="XAU/USD", interval="5min", limit=200):
+def fetch_ohlc(symbol="XAU/USD", interval="5min", limit=20):
     td = TDClient(apikey=TD_API_KEY)
     bars = td.time_series(symbol=symbol, interval=interval, outputsize=limit, order='ASC').as_pandas()
     bars = bars[['open', 'high', 'low', 'close']].astype(float)
