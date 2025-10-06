@@ -28,5 +28,17 @@ class TestSignalEngine(unittest.TestCase):
         df = fetch_ohlc()
         self.assertTrue(df is None or isinstance(df, pd.DataFrame))
 
+    def test_stateful_trend_persistence(self):
+        # Build data where price crosses above upper band at bar 3 then stays above
+        close = [100, 101, 120, 121, 122, 123, 124]
+        open_ = [99, 100, 110, 120, 121, 122, 123]
+        high = [101, 102, 121, 122, 123, 124, 125]
+        low = [98, 99, 100, 119, 120, 121, 122]
+        data = {'open': open_, 'high': high, 'low': low, 'close': close, 'volume': [1]*7}
+        df = pd.DataFrame(data)
+        long_entry, short_entry, zlema, trend, rsi = detect_signals(df, ema_length=3, band_mult=0.5)
+        # After the upward crossover (bar index 2), trend should be 1 for subsequent bars
+        self.assertTrue((trend.iloc[2:] == 1).any())
+
 if __name__ == '__main__':
     unittest.main()

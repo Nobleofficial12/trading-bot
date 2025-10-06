@@ -33,18 +33,47 @@ def detect_signals(df, ema_length=70, rsi_length=14, band_mult=1.2):
     zlema = EMAIndicator(src + (src - src.shift(lag)), window=ema_length).ema_indicator()
     atr = AverageTrueRange(df['high'], df['low'], df['close'], window=ema_length).average_true_range()
     volatility = atr.rolling(window=ema_length*3).max() * band_mult
-    trend = pd.Series(0, index=df.index)
-    trend[zlema.notna() & (df['close'] > (zlema + volatility))] = 1
-    trend[zlema.notna() & (df['close'] < (zlema - volatility))] = -1
+
+    # Compute crossover / crossunder against the deviation bands (stateful like Pine Script)
+    upper_band = zlema + volatility
+    lower_band = zlema - volatility
+
+    # Boolean crossovers (requires previous bar comparison)
+    cross_up = (df['close'] > upper_band) & (df['close'].shift(1) <= upper_band.shift(1))
+    cross_down = (df['close'] < lower_band) & (df['close'].shift(1) >= lower_band.shift(1))
+
+    # Initialize trend series and fill it iteratively so trend persists until a flip occurs
+    trend = pd.Series(0, index=df.index, dtype=int)
+    prev = 0
+    for i in range(len(df)):
+        if i == 0:
+            # first bar: set based on crossover if present, otherwise 0
+            if cross_up.iloc[i] and zlema.notna().iloc[i]:
+                prev = 1
+            elif cross_down.iloc[i] and zlema.notna().iloc[i]:
+                prev = -1
+            else:
+                prev = 0
+            trend.iloc[i] = prev
+            continue
+        if zlema.notna().iloc[i]:
+            if cross_up.iloc[i]:
+                prev = 1
+            elif cross_down.iloc[i]:
+                prev = -1
+            # else keep previous prev
+        # if zlema is nan keep prev as-is (can't determine yet)
+        trend.iloc[i] = prev
+
     rsi = RSIIndicator(df['close'], window=rsi_length).rsi()
-    long_entry = (
-        (df['close'] > zlema) & (df['close'].shift(1) <= zlema.shift(1))
-        & (trend == 1) & (trend.shift(1) == 1)
-    )
-    short_entry = (
-        (df['close'] < zlema) & (df['close'].shift(1) >= zlema.shift(1))
-        & (trend == -1) & (trend.shift(1) == -1)
-    )
+
+    # Entry signals: require crossover of price and ZLEMA, and require trend==1 (and was 1 previous)
+    zlema_cross_up = (df['close'] > zlema) & (df['close'].shift(1) <= zlema.shift(1))
+    zlema_cross_down = (df['close'] < zlema) & (df['close'].shift(1) >= zlema.shift(1))
+
+    long_entry = zlema_cross_up & (trend == 1) & (trend.shift(1) == 1)
+    short_entry = zlema_cross_down & (trend == -1) & (trend.shift(1) == -1)
+
     return long_entry, short_entry, zlema, trend, rsi
 
 def send_signal_to_webhook(signal_type, price, ema_trend, rsi, webhook_url):
