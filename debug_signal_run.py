@@ -48,9 +48,26 @@ def main(send=False):
         print('Check your Twelve Data API key and network connection.')
         return
 
+
     if df5 is None or df1h is None or len(df5) < 5 or len(df1h) < 5:
-        print('Insufficient data fetched for debug output. Check your data source and API key.')
+        print(f'Insufficient data fetched for debug output. Got {len(df5) if df5 is not None else 0} rows for 5m, {len(df1h) if df1h is not None else 0} rows for 1h. Check your data source and API key.')
         return
+
+    # Only print as many rows as available (up to 5)
+    n5 = min(5, len(df5))
+    n1h = min(5, len(df1h))
+
+    print("\n--- 5m Debug (last up to 5 bars) ---")
+    print("idx | close     | zlema     | trend | long_entry | confirmed_long_5m")
+    for i in range(-n5, 0):
+        idx = df5.index[i]
+        print(f"{idx:3} | {df5['close'].iloc[i]:9.2f} | {z5.iloc[i]:9.2f} | {t5.iloc[i]:5} | {le5.iloc[i]} | {confirmed_long_5m.iloc[i]}")
+
+    print("\n--- 1h Debug (last up to 5 bars) ---")
+    print("idx | close     | zlema     | trend")
+    for i in range(-n1h, 0):
+        idx = df1h.index[i]
+        print(f"{idx:3} | {df1h['close'].iloc[i]:9.2f} | {z1h.iloc[i]:9.2f} | {t1h.iloc[i]:5}")
 
     le5, se5, z5, t5, r5 = detect_signals(df5)
     le1h, se1h, z1h, t1h, r1h = detect_signals(df1h)
