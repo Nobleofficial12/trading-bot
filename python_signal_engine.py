@@ -71,10 +71,27 @@ def main():
             long_entry_15m, short_entry_15m, zlema_15m, trend_15m, rsi_15m = detect_signals(df_mtf)
             long_entry_1h, short_entry_1h, zlema_1h, trend_1h, rsi_1h = detect_signals(df_htf)
 
-            # Only send signal if all three timeframes agree
-            if long_entry_5m.iloc[-1] and long_entry_15m.iloc[-1] and long_entry_1h.iloc[-1]:
+            # Check last 3 bars for entry conditions
+            long_5m = long_entry_5m.iloc[-3:]
+            long_15m = long_entry_15m.iloc[-3:]
+            long_1h = long_entry_1h.iloc[-3:]
+            short_5m = short_entry_5m.iloc[-3:]
+            short_15m = short_entry_15m.iloc[-3:]
+            short_1h = short_entry_1h.iloc[-3:]
+
+            # Count how many timeframes have a long/short entry in last 3 bars
+            long_agree = sum([long_5m.any(), long_15m.any(), long_1h.any()])
+            short_agree = sum([short_5m.any(), short_15m.any(), short_1h.any()])
+
+            print(f"Last 3 bars - Long: 5m={long_5m.any()}, 15m={long_15m.any()}, 1h={long_1h.any()} | Agree={long_agree}")
+            print(f"Last 3 bars - Short: 5m={short_5m.any()}, 15m={short_15m.any()}, 1h={short_1h.any()} | Agree={short_agree}")
+
+            # Send signal if any two timeframes agree
+            if long_agree >= 2:
+                print("At least two timeframes agree on LONG. Sending signal...")
                 send_signal_to_webhook("longSignal", df['close'].iloc[-1], trend_5m.iloc[-1], rsi_5m.iloc[-1], webhook_url)
-            elif short_entry_5m.iloc[-1] and short_entry_15m.iloc[-1] and short_entry_1h.iloc[-1]:
+            elif short_agree >= 2:
+                print("At least two timeframes agree on SHORT. Sending signal...")
                 send_signal_to_webhook("shortSignal", df['close'].iloc[-1], trend_5m.iloc[-1], rsi_5m.iloc[-1], webhook_url)
         except NotImplementedError:
             print("fetch_ohlc is not implemented. Please connect to your data source.")
