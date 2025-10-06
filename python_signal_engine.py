@@ -3,6 +3,8 @@ import pandas as pd
 import requests
 import time
 import logging
+import hashlib
+from datetime import datetime, timezone
 from ta.trend import EMAIndicator
 from ta.volatility import AverageTrueRange
 from ta.momentum import RSIIndicator
@@ -22,7 +24,14 @@ def fetch_ohlc(symbol=SYMBOL, interval="5min", limit=FETCH_LIMIT):
         return None
     td = TDClient(apikey=TD_API_KEY)
     bars = td.time_series(symbol=symbol, interval=interval, outputsize=limit, order='ASC').as_pandas()
-    bars = bars[['open', 'high', 'low', 'close']].astype(float)
+    # Ensure the datetime is preserved as a column named 'datetime'
+    bars = bars.reset_index()
+    if 'datetime' not in bars.columns:
+        # rename first column to datetime if necessary
+        bars = bars.rename(columns={bars.columns[0]: 'datetime'})
+    bars['datetime'] = pd.to_datetime(bars['datetime'])
+    # cast OHLC to float
+    bars[['open', 'high', 'low', 'close']] = bars[['open', 'high', 'low', 'close']].astype(float)
     bars['volume'] = 1
     bars = bars.tail(limit).reset_index(drop=True)
     return bars
@@ -83,6 +92,7 @@ def send_signal_to_webhook(signal_type, price, ema_trend, rsi, webhook_url):
         "ema_trend": ema_trend,
         "rsi": rsi
     }
+    # Additional metadata may be added via kwargs (keeps compatibility)
     max_attempts = 3
     backoff = 2
     for attempt in range(1, max_attempts + 1):
@@ -97,6 +107,78 @@ def send_signal_to_webhook(signal_type, price, ema_trend, rsi, webhook_url):
             logging.warning(f"Attempt {attempt} failed to send webhook: {e}")
         time.sleep(backoff ** attempt)
     logging.error(f"Failed to send {signal_type} after {max_attempts} attempts.")
+    return False
+
+
+# Simple in-memory dedupe store to avoid sending duplicate signals repeatedly.
+# Keys are signal_id -> timestamp (UTC seconds)
+_sent_signals = {}
+_DEDUP_TTL = 120  # seconds
+
+def _make_signal_id(symbol, timeframe, signal_type, bar_time):
+    # bar_time is expected to be a pandas.Timestamp or datetime or ISO string
+    if bar_time is None:
+        bt = ''
+    else:
+        if hasattr(bar_time, 'isoformat'):
+            bt = bar_time.isoformat()
+        else:
+            bt = str(bar_time)
+    key = f"{symbol}|{timeframe}|{signal_type}|{bt}"
+    return hashlib.sha256(key.encode('utf-8')).hexdigest()
+
+
+def send_signal_to_webhook_with_metadata(signal_type, price, ema_trend, rsi, webhook_url, *, symbol=None, timeframe=None, bar_time=None, dry_run=False):
+    """Send a webhook with extra metadata and idempotency.
+
+    - Avoids sending the same (symbol,timeframe,signal,bar_time) more than once within TTL.
+    - Adds an Idempotency-Key header and expanded JSON payload.
+    - dry_run=True will only log the payload without POSTing.
+    """
+    signal_id = _make_signal_id(symbol or SYMBOL, timeframe or '', signal_type, bar_time)
+    now_ts = int(datetime.now(timezone.utc).timestamp())
+    # cleanup old entries
+    for k, t in list(_sent_signals.items()):
+        if now_ts - t > _DEDUP_TTL:
+            _sent_signals.pop(k, None)
+    if signal_id in _sent_signals:
+        logging.info(f"Skipping duplicate signal (recently sent): {signal_type} {symbol} {timeframe} {bar_time}")
+        return False
+
+    payload = {
+        "signal_type": signal_type,
+        "price": price,
+        "ema_trend": ema_trend,
+        "rsi": rsi,
+        "symbol": symbol or SYMBOL,
+        "timeframe": timeframe,
+        "bar_time": bar_time.isoformat() if hasattr(bar_time, 'isoformat') else str(bar_time),
+        "sent_at": datetime.now(timezone.utc).isoformat(),
+        "signal_id": signal_id,
+    }
+
+    logging.info(f"Prepared signal payload: {payload}")
+    if dry_run:
+        logging.info("Dry-run enabled: not POSTing to webhook")
+        _sent_signals[signal_id] = now_ts
+        return True
+
+    headers = {"Idempotency-Key": signal_id}
+    max_attempts = 3
+    backoff = 2
+    for attempt in range(1, max_attempts + 1):
+        try:
+            resp = requests.post(webhook_url, json=payload, headers=headers, timeout=10)
+            logging.info(f"Attempt {attempt}: POST {webhook_url} -> {resp.status_code}")
+            if resp.status_code in (200, 201, 202):
+                _sent_signals[signal_id] = now_ts
+                return True
+            else:
+                logging.warning(f"Webhook returned {resp.status_code}: {resp.text}")
+        except requests.exceptions.RequestException as e:
+            logging.warning(f"Attempt {attempt} failed: {e}")
+        time.sleep(backoff ** attempt)
+    logging.error("All attempts to send webhook failed")
     return False
 
 def main():
