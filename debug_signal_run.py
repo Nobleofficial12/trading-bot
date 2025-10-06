@@ -23,9 +23,9 @@ def main(send=False):
     webhook_url = os.getenv('WEBHOOK_URL', getattr(myconfig, 'WEBHOOK_URL', None))
     print('Using webhook_url:', webhook_url)
     try:
-        df5 = fetch_ohlc(interval='5min', limit=100)
-        df15 = fetch_ohlc(interval='15min', limit=100)
-        df1h = fetch_ohlc(interval='1h', limit=100)
+        df5 = fetch_ohlc(interval='5min', limit=200)
+        df15 = fetch_ohlc(interval='15min', limit=200)
+        df1h = fetch_ohlc(interval='1h', limit=200)
     except Exception as e:
         print('Failed to fetch OHLC:', e)
         traceback.print_exc()
