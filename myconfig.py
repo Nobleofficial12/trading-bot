@@ -23,3 +23,4 @@ CHAT_ID = os.getenv('CHAT_ID')
 # Optional tuning
 SYMBOL = os.getenv('SYMBOL', 'XAU/USD')
 FETCH_LIMIT = int(os.getenv('FETCH_LIMIT', '20'))
+EMA_LENGTH = int(os.getenv('EMA_LENGTH', '70'))

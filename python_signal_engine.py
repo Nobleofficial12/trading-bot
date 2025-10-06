@@ -16,6 +16,7 @@ from twelvedata import TDClient
 SYMBOL = os.getenv('SYMBOL', getattr(myconfig, 'SYMBOL', 'XAU/USD'))
 FETCH_LIMIT = int(os.getenv('FETCH_LIMIT', getattr(myconfig, 'FETCH_LIMIT', 20)))
 TD_API_KEY = os.getenv('TWELVE_DATA_API_KEY', getattr(myconfig, 'TWELVE_DATA_API_KEY', None))
+EMA_LENGTH = int(os.getenv('EMA_LENGTH', getattr(myconfig, 'EMA_LENGTH', 70)))
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
@@ -204,10 +205,14 @@ def main():
     fail_count = 0
     while True:
         try:
+            # Ensure we fetch enough bars for indicators (ATR rolling uses ema_length*3)
+            required = int(EMA_LENGTH * 3)
+            effective_limit = max(FETCH_LIMIT, required)
+            logging.info(f"Using fetch limit={effective_limit} (configured {FETCH_LIMIT}, required {required})")
             # Fetch LTF (5min), MTF (15min), and HTF (1h) data
-            df = fetch_ohlc(interval="5min", limit=FETCH_LIMIT)
-            df_mtf = fetch_ohlc(interval="15min", limit=FETCH_LIMIT)
-            df_htf = fetch_ohlc(interval="1h", limit=FETCH_LIMIT)
+            df = fetch_ohlc(interval="5min", limit=effective_limit)
+            df_mtf = fetch_ohlc(interval="15min", limit=effective_limit)
+            df_htf = fetch_ohlc(interval="1h", limit=effective_limit)
             if any(x is None or len(x) < 5 for x in [df, df_mtf, df_htf]):
                 logging.warning("Insufficient data fetched for one or more timeframes. Skipping this cycle.")
                 fail_count += 1
