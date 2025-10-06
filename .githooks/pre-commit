@@ -1,0 +1,10 @@
+#!/bin/sh
+# Prevent committing compiled Python files
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  # Check for staged pyc files or __pycache__ entries
+  if git diff --cached --name-only | grep -E "\.pyc$|__pycache__" >/dev/null 2>&1; then
+    echo "Error: Attempt to commit .pyc or __pycache__ files. Please remove them from the commit." >&2
+    exit 1
+  fi
+fi
+exit 0
