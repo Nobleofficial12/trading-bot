@@ -2,14 +2,17 @@ import os
 import requests
 import time
 import itertools
+import logging
 import myconfig
 
 # ------------------ CONFIG ------------------ #
 # Use environment variables first, then fall back to myconfig
-GOLDAPI_KEY = os.getenv('GOLDAPI_KEY', getattr(myconfig, 'GOLDAPI_KEY', 'goldapi-1cbghsmg8r9nks-io'))
+GOLDAPI_KEY = os.getenv('GOLDAPI_KEY', getattr(myconfig, 'GOLDAPI_KEY', None))
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', getattr(myconfig, 'TELEGRAM_BOT_TOKEN', None))
 CHAT_ID = os.getenv('CHAT_ID', getattr(myconfig, 'CHAT_ID', None))
 FETCH_INTERVAL = int(os.getenv('FETCH_INTERVAL', getattr(myconfig, 'FETCH_INTERVAL', 60)))
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 # -------------------------------------------- #
 
 
@@ -29,9 +32,9 @@ def get_xauusd_price():
             if response.status_code == 200 and "price" in data:
                 return float(data["price"])
             else:
-                print(f"GoldAPI error (attempt {attempt}): {data.get('error', 'No data returned.')}")
+                logging.warning(f"GoldAPI error (attempt {attempt}): {data.get('error', 'No data returned.')}")
         except requests.exceptions.RequestException as e:
-            print(f"GoldAPI request error (attempt {attempt}): {e}")
+            logging.warning(f"GoldAPI request error (attempt {attempt}): {e}")
         time.sleep(1 * attempt)
     return None
 
@@ -42,11 +45,11 @@ def send_telegram_message(message):
     try:
         response = requests.post(url, data=payload)
         if response.status_code == 200:
-            print(f"Telegram alert sent: {message}")
+            logging.info(f"Telegram alert sent: {message}")
         else:
-            print(f"Telegram error: {response.text}")
+            logging.warning(f"Telegram error: {response.text}")
     except requests.exceptions.RequestException as e:
-        print(f"Failed to send Telegram message: {e}")
+        logging.error(f"Failed to send Telegram message: {e}")
 
 def check_and_alert_price_change():
     """Check for big price changes and send Telegram alert if ±1% change detected."""
@@ -73,6 +76,7 @@ def check_and_alert_price_change():
             direction = "up" if percent_change > 0 else "down"
             msg = f"⚡️ Gold price moved {direction} {percent_change:.2f}%!\nPrev: {last_price:.2f}\nNow: {current_price:.2f}"
             send_telegram_message(msg)
+            logging.info("Sent price-change Telegram alert")
 
     # Save current price for next check
     with open(last_price_file, "w") as f:
@@ -83,6 +87,7 @@ def send_market_status_message(status):
     """Send a Telegram message on market open/close."""
     msg = f"🔔 Gold market {status}!"
     send_telegram_message(msg)
+    logging.info(f"Sent market status message: {status}")
 
 def is_market_open():
     """Return True if market is open (Monday-Friday, 24h UTC)."""
@@ -104,6 +109,7 @@ def send_daily_summary():
     now = datetime.datetime.utcnow()
     msg = f"📊 Daily summary for {now.strftime('%Y-%m-%d')}: Gold market monitored."
     send_telegram_message(msg)
+    logging.info("Sent daily summary message")
 
 def main_signal_engine():
     """Automated loop for price change, market status, and daily summary alerts."""

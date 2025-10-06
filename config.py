@@ -1,3 +1,6 @@
-TELEGRAM_BOT_TOKEN = "8354165594:AAEqPeU7hhB6wilHdyJWEO6gCdqJPy8F_XE"
-TWELVE_DATA_API_KEY = "8905999fd8484f62af0d1eb49cbe7d77"
-CHAT_ID = "7085719123"
+import os
+
+# Deprecated: prefer using myconfig.py which reads from environment variables.
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TWELVE_DATA_API_KEY = os.getenv('TWELVE_DATA_API_KEY')
+CHAT_ID = os.getenv('CHAT_ID')

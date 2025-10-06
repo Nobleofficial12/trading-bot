@@ -29,6 +29,25 @@ How to run
 3. Run the webhook: `python tradingview_webhook.py` (or deploy to PythonAnywhere/Heroku)
 4. Run the signal engine: `python python_signal_engine.py`
 
+Quick start (Windows PowerShell)
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+# set env vars (example)
+$env:TWELVE_DATA_API_KEY = 'your_key_here'
+$env:TELEGRAM_BOT_TOKEN = 'your_telegram_token'
+$env:CHAT_ID = 'your_chat_id'
+python debug_signal_run.py
+```
+
+Run tests
+
+```powershell
+python -m pytest -q
+```
+
 Security note
 - Don't commit secrets to Git. Use `myconfig.py` locally and environment variables in production.
 

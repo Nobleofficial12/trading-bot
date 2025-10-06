@@ -1,9 +1,25 @@
-# Webhook URL for production deployment
-WEBHOOK_URL = "https://willacademy.pythonanywhere.com/webhook"
-TELEGRAM_BOT_TOKEN = "8354165594:AAEqPeU7hhB6wilHdyJWEO6gCdqJPy8F_XE"
-TWELVE_DATA_API_KEY = "8905999fd8484f62af0d1eb49cbe7d77"
-CHAT_ID = "7085719123"
+"""
+Central configuration for the trading bot.
 
-# Trading bot config
-SYMBOL = "XAU/USD"
-FETCH_LIMIT = 20
+This file intentionally reads values from environment variables when possible.
+Set the following environment variables in your deployment or in a local .env file:
+
+- WEBHOOK_URL
+- TELEGRAM_BOT_TOKEN
+- TWELVE_DATA_API_KEY
+- CHAT_ID
+- SYMBOL (optional, default: XAU/USD)
+- FETCH_LIMIT (optional, default: 20)
+
+Do NOT commit secrets to source control. Use environment variables or a secrets manager.
+"""
+import os
+
+WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://example.com/webhook')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TWELVE_DATA_API_KEY = os.getenv('TWELVE_DATA_API_KEY')
+CHAT_ID = os.getenv('CHAT_ID')
+
+# Optional tuning
+SYMBOL = os.getenv('SYMBOL', 'XAU/USD')
+FETCH_LIMIT = int(os.getenv('FETCH_LIMIT', '20'))
