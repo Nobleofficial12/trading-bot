@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import time
 import logging
+import numpy as np
 import hashlib
 from datetime import datetime, timezone
 from ta.trend import EMAIndicator
@@ -37,6 +38,23 @@ def fetch_ohlc(symbol=SYMBOL, interval="5min", limit=FETCH_LIMIT):
     return bars
 
 def detect_signals(df, ema_length=70, rsi_length=14, band_mult=1.2):
+    # Minimum bars required: ATR rolling(window=ema_length*3) needs ema_length*3 bars
+    min_bars = int(ema_length * 3)
+    if df is None or len(df) < min_bars:
+        logging.warning(
+            "Insufficient bars for detect_signals: need at least %d bars (ema_length*3=%d), got %d. "
+            "Return safe empty/NaN series. Consider increasing FETCH_LIMIT or decreasing ema_length.",
+            min_bars, min_bars, 0 if df is None else len(df),
+        )
+        # Build safe return values matching expected shapes/indexes
+        idx = df.index if (df is not None and hasattr(df, 'index')) else pd.Index([])
+        long_entry = pd.Series(False, index=idx, dtype=bool)
+        short_entry = pd.Series(False, index=idx, dtype=bool)
+        zlema = pd.Series(np.nan, index=idx, dtype=float)
+        trend = pd.Series(0, index=idx, dtype=int)
+        rsi = pd.Series(np.nan, index=idx, dtype=float)
+        return long_entry, short_entry, zlema, trend, rsi
+
     lag = int((ema_length - 1) / 2)
     src = df['close']
     zlema = EMAIndicator(src + (src - src.shift(lag)), window=ema_length).ema_indicator()
