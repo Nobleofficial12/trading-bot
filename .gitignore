@@ -1,1 +1,10 @@
 __pycache__/
+.venv/
+.env
+*.pyc
+*.pyo
+.DS_Store
+.idea/
+.vscode/
+logs/
+last_xauusd_price.txt
