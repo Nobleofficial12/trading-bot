@@ -20,6 +20,18 @@ def mask(v):
 
 
 def main(send=False):
+    # Print detailed debug info for last 5 bars
+    print("\n--- 5m Debug (last 5 bars) ---")
+    print("idx | close     | zlema     | trend | long_entry | confirmed_long_5m")
+    for i in range(-5, 0):
+        idx = df5.index[i]
+        print(f"{idx:3} | {df5['close'].iloc[i]:9.2f} | {z5.iloc[i]:9.2f} | {t5.iloc[i]:5} | {le5.iloc[i]} | {confirmed_long_5m.iloc[i]}")
+
+    print("\n--- 1h Debug (last 5 bars) ---")
+    print("idx | close     | zlema     | trend")
+    for i in range(-5, 0):
+        idx = df1h.index[i]
+        print(f"{idx:3} | {df1h['close'].iloc[i]:9.2f} | {z1h.iloc[i]:9.2f} | {t1h.iloc[i]:5}")
     webhook_url = os.getenv('WEBHOOK_URL', getattr(myconfig, 'WEBHOOK_URL', None))
     print('Using webhook_url:', webhook_url)
     try:
