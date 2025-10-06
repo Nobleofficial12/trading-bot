@@ -1,4 +1,6 @@
+
 import requests
+import myconfig
 
 data = {
     "signal_type": "longSignal",
@@ -7,6 +9,8 @@ data = {
     "rsi": 65
 }
 
-response = requests.post("http://localhost:5000/webhook", json=data)
+webhook_url = getattr(myconfig, 'WEBHOOK_URL', 'https://willacademy.pythonanywhere.com/webhook')
+print("Posting to:", webhook_url)
+response = requests.post(webhook_url, json=data)
 print("Status Code:", response.status_code)
 print("Response:", response.text)
