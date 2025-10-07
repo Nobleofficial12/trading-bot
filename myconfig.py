@@ -15,6 +15,13 @@ Do NOT commit secrets to source control. Use environment variables or a secrets 
 """
 import os
 
+try:
+	# python-dotenv is optional - if present this will load a local .env file into env vars
+	from dotenv import load_dotenv
+	load_dotenv()
+except Exception:
+	pass
+
 WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://example.com/webhook')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TWELVE_DATA_API_KEY = os.getenv('TWELVE_DATA_API_KEY')
