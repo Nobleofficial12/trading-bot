@@ -5,3 +5,4 @@ ta
 twelvedata
 numpy
 pytest
+python-dotenv
